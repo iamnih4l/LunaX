@@ -1,0 +1,17 @@
+.report__export {
+  background: rgba(var(--color-accent-rgb), 0.1);
+  border: 1px solid var(--color-accent);
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  padding: 0.5rem 1rem;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.report__export:hover {
+  background: var(--color-accent);
+  color: var(--color-background);
+}
