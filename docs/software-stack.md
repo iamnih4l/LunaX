@@ -26,10 +26,18 @@ The following software and technology stack is proposed for the implementation o
 ## Data Formats & Ingestion
 - **pds4_tools**: Official Python package for reading NASA PDS4 XML labels and associated array data.
 
-## Visualization
+## Visualization (Backend / Data Science)
 - **Matplotlib / Seaborn**: Generating evaluation plots, match visualization, and debugging.
-- **Folium / Leaflet**: `[TO DECIDE]` For interactive web-based map visualizations of the registered products.
+- **Folium / Leaflet**: `[TO DECIDE]` For interactive web-based map visualizations of the registered products during backend prototyping.
 
-## UI / CLI
-- **Typer or Click**: For building a robust Command Line Interface (CLI) to trigger the pipeline.
-- **Gradio or Streamlit**: `[TO DECIDE]` For the SIH final presentation and live hackathon demo UI.
+## Backend CLI
+- **Typer or Click**: For building a robust Command Line Interface (CLI) to trigger the pipeline programmatically.
+
+## Frontend (Cinematic Interface)
+Given the requirement for a cinematic, interactive lunar-science interface, the following frontend stack is proposed:
+- **Framework**: **Next.js (React)** or **Vite (React)** for a robust, component-driven UI architecture.
+- **Language**: **TypeScript** to ensure type safety and seamless integration with the generated API contract schemas.
+- **3D & Spatial Visualization**: **Three.js** (via React Three Fiber) or **CesiumJS** for rendering the interactive 3D lunar globe and sensor footprints.
+- **Styling & Animations**: **Tailwind CSS** for layout, paired with **Framer Motion** or **GSAP** for fluid, cinematic transitions and micro-animations.
+- **State Management**: **Zustand** or **Redux Toolkit** to manage the complex application state (e.g., tracking the processing pipeline stages).
+- **API Integration**: **Axios** or **TanStack Query (React Query)** to handle data fetching, caching, and polling the processing pipeline status from the backend.
