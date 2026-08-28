@@ -97,3 +97,89 @@
   background: var(--color-accent);
   box-shadow: 0 0 6px var(--color-accent-glow);
 }
+
+/* ─── Sun Controls ─── */
+.hud__sun-controls {
+  position: absolute;
+  bottom: var(--space-6);
+  left: 120px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  background: rgba(5, 5, 8, 0.85);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  pointer-events: auto;
+  min-width: 160px;
+}
+
+.hud__sun-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hud__sun-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-text-muted);
+}
+
+.hud__sun-value {
+  color: var(--color-accent);
+  font-size: 9px;
+}
+
+.hud__sun-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 3px;
+  background: var(--color-surface-3);
+  border-radius: 2px;
+  outline: none;
+  cursor: pointer;
+}
+
+.hud__sun-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  box-shadow: 0 0 6px var(--color-accent-glow);
+}
+
+.hud__sun-slider::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  cursor: pointer;
+  border: none;
+  box-shadow: 0 0 6px var(--color-accent-glow);
+}
+
+.hud__sun-reset {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: var(--tracking-widest);
+  color: var(--color-text-muted);
+  padding: var(--space-1) 0;
+  cursor: pointer;
+  transition: color var(--duration-fast) ease;
+  text-align: center;
+  margin-top: var(--space-1);
+}
+
+.hud__sun-reset:hover {
+  color: var(--color-text-secondary);
+}

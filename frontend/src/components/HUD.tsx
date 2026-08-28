@@ -21,7 +21,13 @@ const LAYERS: LayerDef[] = [
 ];
 
 export default function HUD() {
-  const { activeLayers, toggleLayer, isDemoMode } = useAppStore();
+  const {
+    activeLayers, toggleLayer, isDemoMode,
+    sunElevation, sunAzimuth,
+    setSunElevation, setSunAzimuth, resetSunDirection,
+  } = useAppStore();
+
+  const showSunControls = activeLayers.has('sun');
 
   return (
     <div className="hud">
@@ -48,6 +54,53 @@ export default function HUD() {
           </button>
         ))}
       </div>
+
+      {/* Sun controls — visible when SUN layer is active */}
+      {showSunControls && (
+        <div className="hud__sun-controls">
+          <div className="hud__section-label">☉ SUN DIRECTION</div>
+
+          <div className="hud__sun-slider-group">
+            <label className="hud__sun-label" htmlFor="sun-elevation">
+              ELEVATION
+              <span className="hud__sun-value">{sunElevation.toFixed(0)}°</span>
+            </label>
+            <input
+              id="sun-elevation"
+              type="range"
+              min="5"
+              max="85"
+              step="1"
+              value={sunElevation}
+              onChange={(e) => setSunElevation(Number(e.target.value))}
+              className="hud__sun-slider"
+              aria-label="Sun elevation angle"
+            />
+          </div>
+
+          <div className="hud__sun-slider-group">
+            <label className="hud__sun-label" htmlFor="sun-azimuth">
+              AZIMUTH
+              <span className="hud__sun-value">{sunAzimuth.toFixed(0)}°</span>
+            </label>
+            <input
+              id="sun-azimuth"
+              type="range"
+              min="0"
+              max="360"
+              step="1"
+              value={sunAzimuth}
+              onChange={(e) => setSunAzimuth(Number(e.target.value))}
+              className="hud__sun-slider"
+              aria-label="Sun azimuth angle"
+            />
+          </div>
+
+          <button className="hud__sun-reset" onClick={resetSunDirection}>
+            RESET
+          </button>
+        </div>
+      )}
     </div>
   );
 }

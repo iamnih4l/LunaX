@@ -1,20 +1,29 @@
 /* ─── Registration Result View ─── */
 /* Final registered product viewer with comparison controls */
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import MetricsPanel from '../components/MetricsPanel';
 import SensorBadge from '../components/SensorBadge';
 import { useAppStore } from '../store/useAppStore';
-import { SENSORS, DEMO_METRICS } from '../api/mock';
+import { SENSORS, DEMO_METRICS_POPULATED } from '../api/mock';
 import './Result.css';
 import './ResultBlink.css';
 import './ResultOverlay.css';
 
 type CompareMode = 'source' | 'reference' | 'overlay' | 'difference' | 'blink';
 
+/* Deterministic seeded PRNG for tiepoint / residual rendering */
+function createSeededRng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return s / 2147483647;
+  };
+}
+
 export default function Result() {
-  const { referenceImage, sourceImage, setView, isDemoMode } = useAppStore();
+  const { referenceImage, sourceImage, setView, isDemoMode, completedMetrics } = useAppStore();
   const [compareMode, setCompareMode] = useState<CompareMode>('overlay');
   const [sliderPosition, setSliderPosition] = useState(50);
   const [showTiepoints, setShowTiepoints] = useState(false);
@@ -23,9 +32,26 @@ export default function Result() {
   const ref = referenceImage;
   const src = sourceImage;
 
+  // Use pipeline results if available, otherwise fall back to populated demo metrics
+  const metrics = completedMetrics || DEMO_METRICS_POPULATED;
+
+  // Generate deterministic tiepoint/residual data (stable across re-renders)
+  const tiepointData = useMemo(() => {
+    const rand = createSeededRng(777);
+    return Array.from({ length: 40 }).map(() => ({
+      x: 100 + rand() * 600,
+      y: 100 + rand() * 400,
+      dx: (rand() - 0.5) * 20,
+      dy: (rand() - 0.5) * 20,
+    }));
+  }, []);
+
   if (!ref || !src) {
     return (
       <div className="result result--empty">
+        <p style={{ color: 'var(--color-text-tertiary)', marginBottom: 'var(--space-4)' }}>
+          No registration result available.
+        </p>
         <button onClick={() => setView('explorer')}>← SELECT OBSERVATIONS</button>
       </div>
     );
@@ -108,6 +134,7 @@ export default function Result() {
                       value={sliderPosition}
                       onChange={(e) => setSliderPosition(Number(e.target.value))}
                       className="result__slider"
+                      aria-label="Comparison slider"
                     />
                     <div
                       className="result__slider-line"
@@ -152,31 +179,24 @@ export default function Result() {
                     </div>
                   </div>
                 )}
-                {/* SVG Overlay for Tiepoints and Residuals */}
+                {/* SVG Overlay for Tiepoints and Residuals — DETERMINISTIC */}
                 {(showTiepoints || showResiduals) && (
                   <svg className="result__svg-overlay" viewBox="0 0 800 600" preserveAspectRatio="xMidYMid meet">
-                    {/* Simulated points / residuals */}
-                    {Array.from({ length: 40 }).map((_, i) => {
-                      const x = 100 + Math.random() * 600;
-                      const y = 100 + Math.random() * 400;
-                      const dx = (Math.random() - 0.5) * 20;
-                      const dy = (Math.random() - 0.5) * 20;
-                      return (
-                        <g key={i}>
-                          {showTiepoints && (
-                            <circle cx={x} cy={y} r={3} fill="var(--color-success)" />
-                          )}
-                          {showResiduals && (
-                            <line 
-                              x1={x} y1={y} x2={x + dx} y2={y + dy} 
-                              stroke="var(--color-error)" 
-                              strokeWidth={2}
-                              markerEnd="url(#arrow)"
-                            />
-                          )}
-                        </g>
-                      );
-                    })}
+                    {tiepointData.map((pt, i) => (
+                      <g key={i}>
+                        {showTiepoints && (
+                          <circle cx={pt.x} cy={pt.y} r={3} fill="var(--color-success)" />
+                        )}
+                        {showResiduals && (
+                          <line 
+                            x1={pt.x} y1={pt.y} x2={pt.x + pt.dx} y2={pt.y + pt.dy} 
+                            stroke="var(--color-error)" 
+                            strokeWidth={2}
+                            markerEnd="url(#arrow)"
+                          />
+                        )}
+                      </g>
+                    ))}
                     <defs>
                       <marker id="arrow" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
                         <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--color-error)" />
@@ -209,7 +229,35 @@ export default function Result() {
           animate={{ x: 0, opacity: 1 }}
           transition={{ delay: 0.3, duration: 0.6 }}
         >
-          <MetricsPanel metrics={DEMO_METRICS} isDemo={isDemoMode} />
+          <MetricsPanel metrics={metrics} isDemo={isDemoMode} />
+
+          {/* Confidence breakdown */}
+          <div className="result__confidence-section">
+            <span className="label">CONFIDENCE BREAKDOWN</span>
+            <div className="result__confidence-bars">
+              <div className="result__confidence-row">
+                <span className="result__confidence-label">HIGH (≥0.8)</span>
+                <div className="result__confidence-bar">
+                  <div className="result__confidence-fill result__confidence-fill--high" style={{ width: '81%' }} />
+                </div>
+                <span className="result__confidence-count">1,037</span>
+              </div>
+              <div className="result__confidence-row">
+                <span className="result__confidence-label">MED (0.5–0.8)</span>
+                <div className="result__confidence-bar">
+                  <div className="result__confidence-fill result__confidence-fill--med" style={{ width: '14%' }} />
+                </div>
+                <span className="result__confidence-count">183</span>
+              </div>
+              <div className="result__confidence-row">
+                <span className="result__confidence-label">LOW (&lt;0.5)</span>
+                <div className="result__confidence-bar">
+                  <div className="result__confidence-fill result__confidence-fill--low" style={{ width: '5%' }} />
+                </div>
+                <span className="result__confidence-count">64</span>
+              </div>
+            </div>
+          </div>
 
           <div className="result__pipeline-summary">
             <span className="label">PIPELINE SUMMARY</span>

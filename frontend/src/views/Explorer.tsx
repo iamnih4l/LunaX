@@ -1,7 +1,7 @@
 /* ─── Lunar Explorer View ─── */
 /* Primary Moon interface with sensor footprints and observation selection */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { Canvas } from '@react-three/fiber';
 import { motion, AnimatePresence } from 'framer-motion';
 import LunarGlobe from '../components/LunarGlobe';
@@ -15,7 +15,18 @@ import ImageUploader from '../components/ImageUploader';
 import './Explorer.css';
 
 export default function Explorer() {
-  const { setView, setReferenceImage, setSourceImage } = useAppStore();
+  const { setView, setReferenceImage, setSourceImage, sunElevation, sunAzimuth } = useAppStore();
+
+  // Compute sun direction vector from elevation/azimuth
+  const sunDirection = useMemo((): [number, number, number] => {
+    const elRad = (sunElevation * Math.PI) / 180;
+    const azRad = (sunAzimuth * Math.PI) / 180;
+    return [
+      Math.cos(elRad) * Math.cos(azRad) * 5,
+      Math.sin(elRad) * 2,
+      Math.cos(elRad) * Math.sin(azRad) * 3,
+    ];
+  }, [sunElevation, sunAzimuth]);
   const [selectedRef, setSelectedRef] = useState<ImageMetadata | null>(null);
   const [selectedSrc, setSelectedSrc] = useState<ImageMetadata | null>(null);
   const [showPanel, setShowPanel] = useState(true);
@@ -55,7 +66,7 @@ export default function Explorer() {
           gl={{ antialias: true, alpha: true }}
         >
           <StarField count={2000} radius={50} />
-          <LunarGlobe radius={2} interactive={true} />
+          <LunarGlobe radius={2} interactive={true} sunDirection={sunDirection} />
         </Canvas>
       </div>
 

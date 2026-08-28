@@ -12,6 +12,17 @@ import type {
   RegistrationResult,
 } from '../types';
 
+/* ─── Deterministic PRNG ─── */
+/* Seeded pseudo-random number generator for consistent demo data across sessions. */
+
+function createSeededRng(seed: number) {
+  let s = seed;
+  return () => {
+    s = (s * 16807 + 0) % 2147483647;
+    return s / 2147483647;
+  };
+}
+
 /* ─── Sensor Specifications ─── */
 /* Values sourced from deep-research-report.md */
 
@@ -46,6 +57,67 @@ export const SENSORS: Record<string, SensorMetadata> = {
     description: 'Hyperspectral imager',
   },
 };
+
+/* ─── Demo Lunar Regions ─── */
+/* DEMO DATA — these are simplified representations for frontend demonstration. */
+
+export interface LunarRegion {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+  elevation: number;
+  description: string;
+  availableObservations: number;
+}
+
+export const DEMO_REGIONS: LunarRegion[] = [
+  {
+    id: 'mare-imbrium',
+    name: 'Mare Imbrium',
+    lat: 32.8,
+    lon: -15.6,
+    elevation: -3200,
+    description: 'One of the largest basaltic plains on the Moon, formed by an ancient impact.',
+    availableObservations: 3,
+  },
+  {
+    id: 'tycho-crater',
+    name: 'Tycho Crater',
+    lat: -43.3,
+    lon: -11.2,
+    elevation: 4800,
+    description: 'Prominent young impact crater with distinctive ray system visible from Earth.',
+    availableObservations: 2,
+  },
+  {
+    id: 'south-pole-aitken',
+    name: 'South Pole-Aitken',
+    lat: -53.0,
+    lon: 169.0,
+    elevation: -6200,
+    description: 'The largest and deepest impact basin on the Moon.',
+    availableObservations: 2,
+  },
+  {
+    id: 'aristarchus-plateau',
+    name: 'Aristarchus Plateau',
+    lat: 23.7,
+    lon: -47.5,
+    elevation: 2000,
+    description: 'Geologically complex region with the brightest crater on the Moon.',
+    availableObservations: 2,
+  },
+  {
+    id: 'mare-tranquillitatis',
+    name: 'Mare Tranquillitatis',
+    lat: 8.5,
+    lon: 31.4,
+    elevation: -2800,
+    description: 'Historic Apollo 11 landing region — Sea of Tranquility.',
+    availableObservations: 2,
+  },
+];
 
 /* ─── Demo Observations ─── */
 
@@ -160,38 +232,66 @@ export function createPipelineStages(status: 'idle' | 'complete'): ProcessingSta
   }));
 }
 
-/* ─── Demo Correspondences ─── */
+/* ─── Demo Correspondences (Deterministic) ─── */
+/* Uses seeded PRNG so results are identical across sessions. */
 
 export function generateDemoCorrespondences(count: number): Correspondence[] {
+  const rand = createSeededRng(42);
   const correspondences: Correspondence[] = [];
+
   for (let i = 0; i < count; i++) {
-    const isInlier = Math.random() > 0.15;
+    const isInlier = rand() > 0.15;
+    const confidence = 0.4 + rand() * 0.6;
     correspondences.push({
       id: i,
       source: {
-        x: 100 + Math.random() * 800,
-        y: 100 + Math.random() * 600,
-        confidence: 0.5 + Math.random() * 0.5,
+        x: 100 + rand() * 800,
+        y: 100 + rand() * 600,
+        confidence: 0.5 + rand() * 0.5,
       },
       reference: {
-        x: 100 + Math.random() * 800 + (Math.random() - 0.5) * 20,
-        y: 100 + Math.random() * 600 + (Math.random() - 0.5) * 20,
-        confidence: 0.5 + Math.random() * 0.5,
+        x: 100 + rand() * 800 + (rand() - 0.5) * 20,
+        y: 100 + rand() * 600 + (rand() - 0.5) * 20,
+        confidence: 0.5 + rand() * 0.5,
       },
-      confidence: 0.4 + Math.random() * 0.6,
+      confidence,
       isInlier,
-      method: Math.random() > 0.3 ? 'LightGlue' : 'RIFT2',
+      method: rand() > 0.3 ? 'LightGlue' : 'RIFT2',
       bucketCell: {
-        row: Math.floor(Math.random() * 16),
-        col: Math.floor(Math.random() * 16),
+        row: Math.floor(rand() * 16),
+        col: Math.floor(rand() * 16),
       },
     });
   }
   return correspondences;
 }
 
-/* ─── Demo Metrics ─── */
-/* THESE ARE NOT REAL EXPERIMENTAL RESULTS */
+/* ─── Demo Metrics (POPULATED) ─── */
+/* ⚠ THESE ARE NOT REAL EXPERIMENTAL RESULTS — DEMO VALUES ONLY */
+
+export const DEMO_METRICS_POPULATED: EvaluationMetrics = {
+  rmse: 0.47,
+  inlierRatio: 0.847,
+  uniformityScore: 0.023,
+  processingTime: 18.4,
+  totalMatches: 1284,
+  totalInliers: 1037,
+  gridSize: { rows: 16, cols: 16 },
+  cellCounts: (() => {
+    const rand = createSeededRng(123);
+    const grid: number[][] = [];
+    for (let r = 0; r < 16; r++) {
+      const row: number[] = [];
+      for (let c = 0; c < 16; c++) {
+        row.push(Math.floor(3 + rand() * 5));
+      }
+      grid.push(row);
+    }
+    return grid;
+  })(),
+};
+
+/* ─── Legacy DEMO_METRICS (null values for backward compat) ─── */
 
 export const DEMO_METRICS: EvaluationMetrics = {
   rmse: null,
@@ -209,8 +309,8 @@ export const DEMO_METRICS: EvaluationMetrics = {
 export const DEMO_RESULT: RegistrationResult = {
   jobId: 'demo-job-001',
   status: 'SUCCESS',
-  metrics: DEMO_METRICS,
-  correspondences: [],
+  metrics: DEMO_METRICS_POPULATED,
+  correspondences: generateDemoCorrespondences(1284),
 };
 
 /* ─── Demo Processing Job ─── */

@@ -198,3 +198,46 @@
   letter-spacing: var(--tracking-wider);
   color: var(--color-success);
 }
+
+/* ─── Stats Grid ─── */
+.report__stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-3);
+}
+
+.report__stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-4) var(--space-3);
+  background: var(--color-surface-1);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.report__stat-value {
+  font-family: var(--font-mono);
+  font-size: var(--text-xl);
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.report__stat-value--accent {
+  color: var(--color-accent);
+}
+
+.report__stat-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: var(--tracking-widest);
+  color: var(--color-text-muted);
+  text-align: center;
+}
+
+/* ─── Export Button States ─── */
+.report__export--active {
+  color: var(--color-success) !important;
+  border-color: rgba(74, 222, 128, 0.3) !important;
+}

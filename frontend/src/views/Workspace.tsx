@@ -1,79 +1,84 @@
 /* ─── Registration Workspace View ─── */
 /* The heart — cinematic pipeline progression with side-by-side images */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import ProcessingPipeline from '../components/ProcessingPipeline';
 import MetricsPanel from '../components/MetricsPanel';
 import SensorBadge from '../components/SensorBadge';
 import CorrespondenceViewer from '../components/CorrespondenceViewer';
 import { useAppStore } from '../store/useAppStore';
-import { createPipelineStages, SENSORS, DEMO_METRICS, generateDemoCorrespondences } from '../api/mock';
-import { startRegistration, connectJobWebSocket } from '../api/client';
-import type { ProcessingStage, StageStatus, Correspondence } from '../types';
+import { createPipelineStages, SENSORS, DEMO_METRICS_POPULATED } from '../api/mock';
+import { runCorrespondence } from '../api/simulatedApi';
+import type { ProcessingStage, Correspondence } from '../types';
 import './Workspace.css';
 
 export default function Workspace() {
-  const { referenceImage, sourceImage, setView, isDemoMode } = useAppStore();
+  const { referenceImage, sourceImage, setView, isDemoMode, setCompletedResults, processingMessage, setProcessingMessage } = useAppStore();
   const [stages, setStages] = useState<ProcessingStage[]>(createPipelineStages('idle'));
   const [currentStageIdx, setCurrentStageIdx] = useState(-1);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [correspondences, setCorrespondences] = useState<Correspondence[]>([]);
+  const [overallProgress, setOverallProgress] = useState(0);
+  const cancelRef = useRef(false);
 
   const ref = referenceImage;
   const src = sourceImage;
 
-  /* Run pipeline via backend API */
+  /* Run pipeline via simulated API (demo mode) or real backend */
   const runPipeline = useCallback(async () => {
     if (isProcessing || !ref || !src) return;
     setIsProcessing(true);
     setCurrentStageIdx(0);
     setStages(createPipelineStages('idle'));
-    // Use demo correspondences for visualizer until backend sends them
-    setCorrespondences(generateDemoCorrespondences(300));
+    setCorrespondences([]);
     setIsComplete(false);
+    setOverallProgress(0);
+    setProcessingMessage('Initializing pipeline...');
+    cancelRef.current = false;
 
     try {
-      const response = await startRegistration(src, ref);
-      
-      const ws = connectJobWebSocket(response.job_id, (data) => {
-        if (data.status === 'completed') {
-          setIsProcessing(false);
-          setIsComplete(true);
-          setStages((prev) => prev.map(s => ({ ...s, status: 'COMPLETED', progress: 1 })));
-          setCurrentStageIdx(11);
-          ws.close();
-        } else if (data.status === 'failed') {
-          console.error('Job failed:', data.message);
-          setIsProcessing(false);
-          ws.close();
-        } else if (data.status === 'processing') {
-          // Map backend stage name to frontend index array
-          let targetIdx = 0;
-          const stageStr = (data.stage || '').toUpperCase();
-          if (stageStr === 'INGEST') targetIdx = 1;
-          else if (stageStr === 'PREPROCESS') targetIdx = 3;
-          else if (stageStr === 'FEATURES') targetIdx = 5;
-          else if (stageStr === 'GEOMETRY') targetIdx = 7;
-          else if (stageStr === 'REGISTER') targetIdx = 9;
-          else if (stageStr === 'EVALUATE') targetIdx = 10;
-          
-          setCurrentStageIdx(targetIdx);
-          setStages(prev => prev.map((s, i) => {
-            if (i < targetIdx) return { ...s, status: 'COMPLETED', progress: 1 };
-            if (i === targetIdx) return { ...s, status: 'RUNNING', progress: data.progress || 0.5 };
-            return { ...s, status: 'PENDING', progress: 0 };
-          }));
+      const result = await runCorrespondence(ref, src, (update) => {
+        if (cancelRef.current) return;
+
+        // Update the current stage
+        setCurrentStageIdx(update.stageIndex);
+        setOverallProgress(update.overallProgress);
+        setProcessingMessage(update.message);
+
+        // Update the stages array
+        setStages((prev) =>
+          prev.map((s, i) => {
+            if (i < update.stageIndex) {
+              return { ...s, status: 'COMPLETED', progress: 1 };
+            }
+            if (i === update.stageIndex) {
+              return { ...update.stage };
+            }
+            return s;
+          })
+        );
+
+        // Receive correspondences when they arrive
+        if (update.correspondences) {
+          setCorrespondences(update.correspondences);
         }
       });
-    } catch (e) {
-      console.error(e);
-      setIsProcessing(false);
-    }
-  }, [isProcessing, ref, src]);
 
-  // Remove the old useEffect that simulated the timeout.
+      if (!cancelRef.current) {
+        setIsProcessing(false);
+        setIsComplete(true);
+        setStages((prev) => prev.map((s) => ({ ...s, status: 'COMPLETED' as const, progress: 1 })));
+        setProcessingMessage('Registration complete ✓');
+        setCompletedResults(result.metrics, result.correspondences);
+      }
+    } catch (e) {
+      console.error('Pipeline error:', e);
+      setIsProcessing(false);
+      setProcessingMessage('Pipeline error — retry available');
+    }
+  }, [isProcessing, ref, src, setCompletedResults, setProcessingMessage]);
 
   if (!ref || !src) {
     return (
@@ -97,10 +102,24 @@ export default function Workspace() {
         <div className="workspace__title">
           <span className="label">REGISTRATION WORKSPACE</span>
         </div>
-        {isDemoMode && (
-          <span className="workspace__demo-tag">DEMO DATA</span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          {isDemoMode && (
+            <span className="workspace__demo-tag">DEMO DATA</span>
+          )}
+        </div>
       </div>
+
+      {/* Progress bar */}
+      {(isProcessing || isComplete) && (
+        <div className="workspace__progress-bar">
+          <motion.div
+            className="workspace__progress-fill"
+            initial={{ width: 0 }}
+            animate={{ width: `${overallProgress * 100}%` }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+          />
+        </div>
+      )}
 
       {/* Main content */}
       <div className="workspace__content">
@@ -115,6 +134,13 @@ export default function Workspace() {
             stages={stages}
             currentStageId={currentStageIdx >= 0 && currentStageIdx < stages.length ? stages[currentStageIdx].id : undefined}
           />
+
+          {/* Status message */}
+          {processingMessage && (isProcessing || isComplete) && (
+            <div className="workspace__status-msg">
+              <span className="telemetry">{processingMessage}</span>
+            </div>
+          )}
 
           {/* Run button */}
           {!isProcessing && !isComplete && (
@@ -206,8 +232,29 @@ export default function Workspace() {
             </div>
           </div>
 
+          {/* Geometry info */}
+          <div className="workspace__pair-info">
+            <span className="label">SUN GEOMETRY</span>
+            <div className="workspace__geometry-grid">
+              <div className="workspace__geometry-item">
+                <span className="workspace__geometry-label">REF ☉ ELEV</span>
+                <span className="workspace__geometry-value">{ref.acquisition.sunElevation.toFixed(1)}°</span>
+              </div>
+              <div className="workspace__geometry-item">
+                <span className="workspace__geometry-label">SRC ☉ ELEV</span>
+                <span className="workspace__geometry-value">{src.acquisition.sunElevation.toFixed(1)}°</span>
+              </div>
+              <div className="workspace__geometry-item">
+                <span className="workspace__geometry-label">Δ ELEVATION</span>
+                <span className="workspace__geometry-value" style={{ color: 'var(--color-accent)' }}>
+                  {Math.abs(ref.acquisition.sunElevation - src.acquisition.sunElevation).toFixed(1)}°
+                </span>
+              </div>
+            </div>
+          </div>
+
           {isComplete && (
-            <MetricsPanel metrics={DEMO_METRICS} isDemo={isDemoMode} />
+            <MetricsPanel metrics={DEMO_METRICS_POPULATED} isDemo={isDemoMode} />
           )}
         </motion.div>
       </div>

@@ -259,3 +259,66 @@
 .result__summary-value--done {
   color: var(--color-success);
 }
+
+/* ─── Confidence Breakdown ─── */
+.result__confidence-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.result__confidence-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.result__confidence-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.result__confidence-label {
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: var(--tracking-wide);
+  color: var(--color-text-muted);
+  width: 80px;
+  flex-shrink: 0;
+}
+
+.result__confidence-bar {
+  flex: 1;
+  height: 4px;
+  background: var(--color-surface-2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.result__confidence-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.6s var(--ease-out);
+}
+
+.result__confidence-fill--high {
+  background: var(--color-success);
+}
+
+.result__confidence-fill--med {
+  background: var(--color-accent);
+}
+
+.result__confidence-fill--low {
+  background: var(--color-error);
+}
+
+.result__confidence-count {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  color: var(--color-text-tertiary);
+  width: 36px;
+  text-align: right;
+  flex-shrink: 0;
+}
