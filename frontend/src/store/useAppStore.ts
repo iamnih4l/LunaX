@@ -1,61 +1,54 @@
-/* ─── LunaX Application Store ─── */
-
 import { create } from 'zustand';
-import type { AppView, ImageMetadata, ProcessingJob } from '../types';
+import type { InternalObservation } from '../core/types';
+import type { ApiService } from '../core/api/apiService';
+import { mockApiService } from '../core/api/mockClient';
+import { realApiService } from '../core/api/realClient';
 
 interface AppState {
-  /* ─── Navigation ─── */
-  currentView: AppView;
-  setView: (view: AppView) => void;
+  // Global Mode
+  isSimulationMode: boolean;
+  setSimulationMode: (val: boolean) => void;
+  getApi: () => ApiService;
 
-  /* ─── Demo Mode ─── */
-  isDemoMode: boolean;
+  // HUD
+  hoverCoordinates: { lat: number, lon: number } | null;
+  setHoverCoordinates: (coords: { lat: number, lon: number } | null) => void;
 
-  /* ─── Observation Selection ─── */
-  referenceImage: ImageMetadata | null;
-  sourceImage: ImageMetadata | null;
-  setReferenceImage: (img: ImageMetadata | null) => void;
-  setSourceImage: (img: ImageMetadata | null) => void;
+  // Targeting
+  targetCoordinates: { lat: number, lon: number } | null;
+  setTargetCoordinates: (coords: { lat: number, lon: number } | null) => void;
+  manualSourceCoords: { lat: number, lon: number } | null;
+  setManualSourceCoords: (coords: { lat: number, lon: number } | null) => void;
 
-  /* ─── Processing ─── */
-  activeJob: ProcessingJob | null;
-  setActiveJob: (job: ProcessingJob | null) => void;
-
-  /* ─── Globe ─── */
-  globeAutoRotate: boolean;
-  setGlobeAutoRotate: (val: boolean) => void;
-
-  /* ─── Layers ─── */
-  activeLayers: Set<string>;
-  toggleLayer: (layerId: string) => void;
+  // Navigation
+  currentView: 'landing' | 'explorer' | 'correspondence' | 'result';
+  setView: (view: 'landing' | 'explorer' | 'correspondence' | 'result') => void;
+  
+  // Selection
+  referenceImage: InternalObservation | null;
+  sourceImage: InternalObservation | null;
+  setReferenceImage: (obs: InternalObservation | null) => void;
+  setSourceImage: (obs: InternalObservation | null) => void;
 }
 
-export const useAppStore = create<AppState>((set) => ({
+export const useAppStore = create<AppState>((set, get) => ({
+  isSimulationMode: true, // Default to true so it works without backend
+  setSimulationMode: (val) => set({ isSimulationMode: val }),
+  getApi: () => get().isSimulationMode ? mockApiService : realApiService,
+
+  hoverCoordinates: null,
+  setHoverCoordinates: (coords) => set({ hoverCoordinates: coords }),
+
+  targetCoordinates: null,
+  setTargetCoordinates: (coords) => set({ targetCoordinates: coords }),
+  manualSourceCoords: null,
+  setManualSourceCoords: (coords) => set({ manualSourceCoords: coords }),
+
   currentView: 'landing',
   setView: (view) => set({ currentView: view }),
-
-  isDemoMode: true,
-
+  
   referenceImage: null,
   sourceImage: null,
-  setReferenceImage: (img) => set({ referenceImage: img }),
-  setSourceImage: (img) => set({ sourceImage: img }),
-
-  activeJob: null,
-  setActiveJob: (job) => set({ activeJob: job }),
-
-  globeAutoRotate: true,
-  setGlobeAutoRotate: (val) => set({ globeAutoRotate: val }),
-
-  activeLayers: new Set(['surface', 'grid']),
-  toggleLayer: (layerId) =>
-    set((state) => {
-      const next = new Set(state.activeLayers);
-      if (next.has(layerId)) {
-        next.delete(layerId);
-      } else {
-        next.add(layerId);
-      }
-      return { activeLayers: next };
-    }),
+  setReferenceImage: (obs) => set({ referenceImage: obs }),
+  setSourceImage: (obs) => set({ sourceImage: obs }),
 }));
