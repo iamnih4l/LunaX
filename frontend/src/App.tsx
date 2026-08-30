@@ -8,6 +8,7 @@ import Acquisition from './views/Acquisition';
 import Workspace from './views/Workspace';
 import Result from './views/Result';
 import Report from './views/Report';
+import ErrorBoundary from './components/ErrorBoundary';
 import './styles/global.css';
 
 const viewComponents = {
@@ -35,7 +36,9 @@ export default function App() {
         transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
         style={{ width: '100%', height: '100%' }}
       >
-        <ViewComponent />
+        <ErrorBoundary>
+          <ViewComponent />
+        </ErrorBoundary>
       </motion.div>
     </AnimatePresence>
   );
