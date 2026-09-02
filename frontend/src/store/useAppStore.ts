@@ -1,12 +1,9 @@
 import { create } from 'zustand';
-<<<<<<< HEAD
 import type { InternalObservation } from '../core/types';
 import type { ApiService } from '../core/api/apiService';
 import { mockApiService } from '../core/api/mockClient';
 import { realApiService } from '../core/api/realClient';
-=======
 import type { AppView, ImageMetadata, ProcessingJob, EvaluationMetrics, Correspondence } from '../types';
->>>>>>> 97eea63ae31c22d64b04ac68b1601be016507080
 
 interface AppState {
   // Global Mode
@@ -24,7 +21,6 @@ interface AppState {
   manualSourceCoords: { lat: number, lon: number } | null;
   setManualSourceCoords: (coords: { lat: number, lon: number } | null) => void;
 
-<<<<<<< HEAD
   // Navigation
   currentView: 'landing' | 'explorer' | 'correspondence' | 'result';
   setView: (view: 'landing' | 'explorer' | 'correspondence' | 'result') => void;
@@ -34,22 +30,7 @@ interface AppState {
   sourceImage: InternalObservation | null;
   setReferenceImage: (obs: InternalObservation | null) => void;
   setSourceImage: (obs: InternalObservation | null) => void;
-}
 
-export const useAppStore = create<AppState>((set, get) => ({
-  isSimulationMode: true, // Default to true so it works without backend
-  setSimulationMode: (val) => set({ isSimulationMode: val }),
-  getApi: () => get().isSimulationMode ? mockApiService : realApiService,
-
-  hoverCoordinates: null,
-  setHoverCoordinates: (coords) => set({ hoverCoordinates: coords }),
-
-  targetCoordinates: null,
-  setTargetCoordinates: (coords) => set({ targetCoordinates: coords }),
-  manualSourceCoords: null,
-  setManualSourceCoords: (coords) => set({ manualSourceCoords: coords }),
-
-=======
   /* ─── Processing ─── */
   activeJob: ProcessingJob | null;
   setActiveJob: (job: ProcessingJob | null) => void;
@@ -83,19 +64,26 @@ export const useAppStore = create<AppState>((set, get) => ({
 const DEFAULT_SUN_ELEVATION = 35;
 const DEFAULT_SUN_AZIMUTH = 180;
 
-export const useAppStore = create<AppState>((set) => ({
->>>>>>> 97eea63ae31c22d64b04ac68b1601be016507080
+export const useAppStore = create<AppState>((set, get) => ({
+  isSimulationMode: true, // Default to true so it works without backend
+  setSimulationMode: (val) => set({ isSimulationMode: val }),
+  getApi: () => get().isSimulationMode ? mockApiService : realApiService,
+
+  hoverCoordinates: null,
+  setHoverCoordinates: (coords) => set({ hoverCoordinates: coords }),
+
+  targetCoordinates: null,
+  setTargetCoordinates: (coords) => set({ targetCoordinates: coords }),
+  manualSourceCoords: null,
+  setManualSourceCoords: (coords) => set({ manualSourceCoords: coords }),
+
   currentView: 'landing',
   setView: (view) => set({ currentView: view }),
   
   referenceImage: null,
   sourceImage: null,
-<<<<<<< HEAD
   setReferenceImage: (obs) => set({ referenceImage: obs }),
   setSourceImage: (obs) => set({ sourceImage: obs }),
-=======
-  setReferenceImage: (img) => set({ referenceImage: img }),
-  setSourceImage: (img) => set({ sourceImage: img }),
 
   activeJob: null,
   setActiveJob: (job) => set({ activeJob: job }),
@@ -131,5 +119,4 @@ export const useAppStore = create<AppState>((set) => ({
       }
       return { activeLayers: next };
     }),
->>>>>>> 97eea63ae31c22d64b04ac68b1601be016507080
 }));
