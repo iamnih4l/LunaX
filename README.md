@@ -16,9 +16,7 @@
   
   *Experience the LunaX platform in action.*
   
-  <video src="https://github.com/iamnih4l/LunaX/blob/main/frontend/public/LunaX.mp4?raw=true" width="100%" controls></video>
-
-  *(If the embedded player above does not load, [**▶️ Click here to watch the Demo**](https://github.com/iamnih4l/LunaX/blob/main/frontend/public/LunaX.mp4))*
+  <video src="https://github.com/iamnih4l/LunaX/raw/main/frontend/public/LunaX.mp4" width="100%" controls></video>
 
   <br>
   <br>
