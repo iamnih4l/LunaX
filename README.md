@@ -16,7 +16,7 @@
   
   *Experience the LunaX platform in action.*
   
-  <video src="https://github.com/iamnih4l/LunaX/raw/main/frontend/public/LunaX.mp4" width="100%" controls></video>
+  <video src="https://github.com/user-attachments/assets/50c2ebf2-d9ce-4673-a2a1-e6a267d31abb" width="100%" controls></video>
 
   <br>
   <br>
